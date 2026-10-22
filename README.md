@@ -22,13 +22,13 @@ After pushing this repository to GitHub, add the following to a LazyVim plugin s
 ```lua
 return {
   {
-    "YOUR_GITHUB_USERNAME/nvim-gozero-api",
+    "guo-steve/nvim-gozero-api",
     ft = "api",
   },
 }
 ```
 
-Replace `YOUR_GITHUB_USERNAME` with your GitHub username or organization. Restart Neovim and open a `.api` file.
+Replace `guo-steve` with your GitHub username or organization. Restart Neovim and open a `.api` file.
 
 ## Usage
 
