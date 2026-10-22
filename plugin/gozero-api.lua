@@ -1,4 +1,4 @@
--- gozero-api.nvim: filetype detection and formatting for go-zero .api files.
+-- gozero-api.nvim: filetype detection, syntax highlighting, and formatting.
 if vim.g.loaded_gozero_api then
   return
 end
@@ -10,25 +10,35 @@ vim.filetype.add({
   },
 })
 
--- Format all .api files in the current file's directory.
--- goctl's formatter accepts a directory, so this intentionally uses --dir.
-vim.keymap.set("n", "<leader>cf", function()
-  local file = vim.api.nvim_buf_get_name(0)
-  if file == "" then
-    vim.notify("gozero-api: current buffer has no file", vim.log.levels.WARN)
-    return
-  end
+-- Integrate with conform.nvim when available. goctl's --stdin mode lets
+-- Conform replace the current buffer contents safely, including on save.
+local ok, conform = pcall(require, "conform")
+if ok then
+  conform.formatters.goctl = {
+    command = "goctl",
+    args = { "api", "format", "--stdin" },
+    stdin = true,
+  }
 
+  conform.formatters_by_ft.api = { "goctl" }
+end
+
+-- Keep an explicit formatting shortcut as well.
+vim.keymap.set("n", "<leader>cf", function()
   if vim.fn.executable("goctl") ~= 1 then
     vim.notify("gozero-api: goctl is not installed or not in PATH", vim.log.levels.ERROR)
     return
   end
 
-  local dir = vim.fn.fnamemodify(file, ":p:h")
-  local output = vim.fn.system({ "goctl", "api", "format", "--dir", dir })
-  if vim.v.shell_error == 0 then
-    vim.notify("Formatted .api files in " .. dir, vim.log.levels.INFO)
-  else
-    vim.notify("goctl api format failed:\n" .. output, vim.log.levels.ERROR)
+  local ok_conform, conform_module = pcall(require, "conform")
+  if not ok_conform then
+    vim.notify("gozero-api: conform.nvim is not available", vim.log.levels.ERROR)
+    return
   end
-end, { desc = "Format go-zero API files" })
+
+  conform_module.format({
+    bufnr = vim.api.nvim_get_current_buf(),
+    formatters = { "goctl" },
+    lsp_format = "never",
+  })
+end, { desc = "Format go-zero API file" })
